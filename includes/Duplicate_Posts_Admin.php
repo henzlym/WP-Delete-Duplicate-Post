@@ -4,16 +4,17 @@ class Duplicate_Posts_Admin
 
     public function __construct()
     {
-        add_action('init', array($this,'reset_sessions'), 1);
+        add_action('init', array($this, 'reset_sessions'), 1);
         add_action('admin_enqueue_scripts', array($this, 'enqueue_admin_scripts'));
         add_action('admin_menu', array($this, 'add_admin_page'));
-        
     }
 
     public function reset_sessions()
     {
-        if(! wp_doing_ajax() && isset($_SESSION['duplicate_posts_to_delete'])){
+        if (!wp_doing_ajax() && isset($_SESSION['duplicate_posts_to_delete'])) {
             unset($_SESSION['duplicate_posts_to_delete']);
+            unset($_SESSION['duplicate_posts_deleted_count']);
+            unset($_SESSION['duplicate_posts_total_rows']);
         }
     }
     /**

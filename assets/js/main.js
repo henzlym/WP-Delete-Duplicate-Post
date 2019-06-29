@@ -37,7 +37,7 @@
             if ((start + chunks) < total || (start + chunks) == total) {
 
                 var percentComplete = (start / total) * 100;
-                if((start + chunks) == total){
+                if ((start + chunks) == total) {
                     percentComplete = (end / total) * 100;
                 }
                 setTimeout(function () {
@@ -60,6 +60,34 @@
                 }
             }
         }
+        function deleteDuplicatePostsCB(start, end, chunks, total) {
+
+            if ((start + chunks) < total || (start + chunks) == total) {
+
+                var percentComplete = (start / total) * 100;
+                if ((start + chunks) == total) {
+                    percentComplete = (end / total) * 100;
+                }
+                setTimeout(function () {
+                    updateProgressBar(parseInt(percentComplete));
+                    deleteDuplicatePosts(start, end, chunks, total);
+                }, 1000);
+
+            }
+            if ((start + chunks) > total) {
+                chunks = total - start;
+                end = chunks + start;
+                var percentComplete = (end / total) * 100;
+
+                if (end == total && start < total) {
+                    setTimeout(function () {
+                        updateProgressBar(parseInt(percentComplete));
+                        deleteDuplicatePosts(start, end, chunks, total);
+                    }, 1000);
+
+                }
+            }
+        }
         function deleteDuplicatePosts(start, end, chunks, totalRows) {
             $.ajax({
                 url: admin.ajaxurl,
@@ -74,8 +102,6 @@
                 async: true,
                 success: function (results) {
                     var results = JSON.parse(results);
-                    console.log(results);
-                    return;
                     var start, end, chunks, total, totalRows, alerts, posts, deletePosts, postsDeleted;
 
                     start = results.start;
@@ -91,10 +117,10 @@
                     if (!alerts.completed) {
 
                         $('.read-file-alert').html(uploadNotice(alerts.action, alerts.message));
-                        //deleteDuplicatePosts();
+                        deleteDuplicatePostsCB(start, end, chunks, totalRows);
                     } else {
                         clearTimeout(t);
-                        //$('.read-file-alert').html(uploadNotice(alerts.action, alerts.message));
+                        $('.read-file-alert').html(uploadNotice(alerts.action, alerts.message));
 
                     }
 
@@ -129,18 +155,18 @@
                     totalRows = results.totalRows;
                     dupesCurrentCount = results.dupesCurrentCount;
                     alerts = results.alerts;
-                    
+
                     deletePosts = results.deletePosts;
-                    
+
                     if (!alerts.completed) {
-                        
+
                         $('.read-file-alert').html(uploadNotice(alerts.action, alerts.message));
                         searchDatabaseCB(start, end, chunks, total, totalRows, dupesCurrentCount);
                     } else {
                         clearTimeout(t);
                         $('.read-file-alert').html(uploadNotice(alerts.action, alerts.message));
                         $('.read-file-alert').after(deletePosts);
-                        
+
                         var percentComplete = (total / total) * 100;
 
                         updateProgressBar(parseInt(percentComplete));
