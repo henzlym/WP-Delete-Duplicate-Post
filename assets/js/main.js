@@ -131,7 +131,7 @@
                 }
             });
         }
-        function searchDatabase(start = 0, end = 20, chunks = 20, totalRows = null, dupesCurrentCount = null) {
+        function searchDatabase(start = 0, end = 20, chunks = 500, totalRows = null, dupesCurrentCount = null) {
             $.ajax({
                 url: admin.ajaxurl,
                 type: "GET",
@@ -190,7 +190,7 @@
             $(document).on('click', '#search', function () {
 
                 var start = $('input[name="row_start"]').val() ? $('input[name="row_start"]').val() : 0;
-                var chunks = $('input[name="row_chunks"]').val() ? $('input[name="row_chunks"]').val() : 20;
+                var chunks = $('input[name="row_chunks"]').val() ? $('input[name="row_chunks"]').val() : 500;
                 var end = parseInt(start) + parseInt(chunks);
                 var totalRows = $('input[name="row_end"]').val();
 

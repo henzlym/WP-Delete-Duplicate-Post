@@ -21,37 +21,58 @@ class Duplicate_Post_Search
         return (int) $total_posts->publish;
     }
 
-    public function search_db($limit, $offset)
+    public function search_db($limit, $last_index)
     {
         global $wpdb;
 
         $posts_found = array();
 
-        $sql = "SELECT a.ID, a.post_title,a.post_name, a.post_type, a.post_status
-        FROM {$wpdb->prefix}posts AS a
-           INNER JOIN (
-              SELECT post_title, MIN( id ) AS min_id
-              FROM {$wpdb->prefix}posts
-              WHERE post_type = 'post'
-              AND post_status = 'publish'
-              GROUP BY post_title
-              HAVING COUNT( * ) > 1
-           ) AS b ON b.post_title = a.post_title
+        // $sql = "SELECT a.ID, a.post_title,a.post_name, a.post_type, a.post_status
+        // FROM {$wpdb->prefix}posts AS a
+        //    INNER JOIN (
+        //       SELECT post_title, MIN( id ) AS min_id
+        //       FROM {$wpdb->prefix}posts
+        //       WHERE post_type = 'post'
+        //       AND post_status = 'publish'
+        //       GROUP BY post_title
+        //       HAVING COUNT( * ) > 1
+        //    ) AS b ON b.post_title = a.post_title
+        // AND b.min_id <> a.id
+        // AND a.post_type = 'post'
+        // AND a.post_status = 'publish'
+        // LIMIT %d OFFSET %d";
+        error_log(print_r($last_index, true));
+        $sql = "SELECT a.ID, a.post_title,a.post_name, b.postdate
+        FROM (
+            SELECT ID,post_name,post_title
+            FROM X6x3g_posts
+            WHERE post_type = 'post' AND post_status = 'publish'
+        ) AS a
+        INNER JOIN (
+            SELECT post_title, MIN( id ) AS min_id, MAX(post_date) as postdate
+            FROM X6x3g_posts
+            WHERE post_type = 'post'
+            AND post_status = 'publish'
+            GROUP BY post_title
+            HAVING COUNT( * ) > 1
+            ORDER by postdate DESC
+        ) AS b ON b.post_title = a.post_title
         AND b.min_id <> a.id
-        AND a.post_type = 'post'
-        AND a.post_status = 'publish'
-        LIMIT %d OFFSET %d";
+        AND b.postdate < %s
+        LIMIT %d";
 
-
-        $prepared_stmt = $wpdb->prepare($sql, $limit, $offset);
+        $prepared_stmt = $wpdb->prepare($sql, $last_index, $limit);
         //error_log(print_r($prepared_stmt, true));
         $results = $wpdb->get_results($prepared_stmt);
+
+        $last_index = end($results);
+
+        $_SESSION['last_index'] = $last_index->postdate;
 
         if ($results) {
             foreach ($results as $key => $result) {
                 $posts_found[] = (int) $result->ID;
-                // $posts_found[$key]['ID'] = $result->ID;
-                // $posts_found[$key]['title'] = $result->post_title;
+
                 // error_log(print_r($result->ID, true));
             }
         } else {
@@ -71,12 +92,13 @@ class Duplicate_Post_Search
         $end = isset($_GET['end']) ? (int) $_GET['end'] : $chunks;
         $dupesCurrentCount = isset($_GET['dupes_current_count']) && !empty($_GET['number_of_rows']) ? (int) $_GET['dupes_current_count'] : null;
 
-        if ($totalRows < $chunks) {
-            $wp_results = $this->search_db($totalRows, $start);
-        } else {
-            $wp_results = $this->search_db($chunks, $start);
-        }
+        $last_index = isset($_SESSION['last_index']) ? $_SESSION['last_index'] : date('Y-m-d H:i:s');
 
+        if ($totalRows < $chunks) {
+            $wp_results = $this->search_db($totalRows, $last_index);
+        } else {
+            $wp_results = $this->search_db($chunks, $last_index);
+        }
 
 
         $results['dupesCurrentCount'] = count($wp_results) + $dupesCurrentCount;
@@ -84,6 +106,7 @@ class Duplicate_Post_Search
         $results['chunks'] = $chunks;
         $results['start'] = $start + $chunks;
         $results['end'] = $end + $chunks;
+        $results['last_index'] = $_SESSION['last_index'];
 
         if (!isset($_SESSION['duplicate_posts_to_delete'])) {
             $_SESSION['duplicate_posts_to_delete'] = array();
@@ -93,14 +116,13 @@ class Duplicate_Post_Search
             $_SESSION['duplicate_posts_deleted_count'] = 0;
         }
 
+        if (!isset($_SESSION['duplicate_posts_to_delete'])) {
+            $_SESSION['last_index'] = $last_index;
+        }
 
         if (is_array($wp_results) && count($wp_results) > 0) {
 
-            // $duplicate_posts_found = $_SESSION['duplicate_posts_to_delete'];
             $duplicates_key = $start . $end;
-            // $duplicate_posts_found[$duplicates_key] = $wp_results;
-            // $new_duplicates_found = array_merge($duplicate_posts_found,$wp_results);
-
             $_SESSION['duplicate_posts_to_delete'][$duplicates_key] = $wp_results;
         }
 
@@ -111,7 +133,7 @@ class Duplicate_Post_Search
             $results['alerts']['message'] = "Process Completed! Found $dupesCurrentCount duplicated posts";
             $results['deletePosts'] = "<button id='delete-duplicates'>Delete Dupiclates</button>";
             // $results['posts'] = $wp_results;
-            // error_log(print_r($_SESSION['duplicate_posts_to_delete'], true));
+            error_log(print_r($_SESSION['duplicate_posts_to_delete'], true));
             // error_log(print_r($results['alerts']['message'], true));
         }
 
@@ -133,6 +155,12 @@ class Duplicate_Post_Search
         }
 
 
+        // if ($end == 1000) {
+        //     $results['alerts']['completed'] = true;
+        //     $results['alerts']['action'] = 'success';
+        //     $results['alerts']['message'] = "Reached 1000 iteration benchmark! Found $dupesCurrentCount duplicated posts. \nPlease begin deletion process.";
+        //     $results['deletePosts'] = "<button id='delete-duplicates'>Delete Dupiclates</button>";
+        // }
 
         echo json_encode($results);
         wp_die();

@@ -15,6 +15,7 @@ class Duplicate_Posts_Admin
             unset($_SESSION['duplicate_posts_to_delete']);
             unset($_SESSION['duplicate_posts_deleted_count']);
             unset($_SESSION['duplicate_posts_total_rows']);
+            unset($_SESSION['last_index']);
         }
     }
     /**
