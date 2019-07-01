@@ -30,9 +30,9 @@ class Duplicate_Post_Search
         $placeholder = implode(', ', array_fill(0, count($posts), '%d'));
 
         $sql = "DELETE a,b,c
-        FROM X6x3g_posts a
-        LEFT JOIN X6x3g_term_relationships b ON ( a.ID = b.object_id )
-        LEFT JOIN X6x3g_postmeta c ON ( a.ID = c.post_id )
+        FROM {$wpdb->prefix}posts a
+        LEFT JOIN {$wpdb->prefix}term_relationships b ON ( a.ID = b.object_id )
+        LEFT JOIN {$wpdb->prefix}postmeta c ON ( a.ID = c.post_id )
         WHERE a.ID IN ($placeholder)";
 
         $prepared_stmt = $wpdb->prepare($sql, $posts);
