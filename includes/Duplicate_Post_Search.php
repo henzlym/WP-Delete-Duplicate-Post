@@ -21,58 +21,62 @@ class Duplicate_Post_Search
         return (int) $total_posts->publish;
     }
 
-    public function search_db($limit, $last_index)
+    public function delete_posts($posts)
+    {
+
+
+        global $wpdb;
+
+        $placeholder = implode(', ', array_fill(0, count($posts), '%d'));
+
+        $sql = "DELETE a,b,c
+        FROM X6x3g_posts a
+        LEFT JOIN X6x3g_term_relationships b ON ( a.ID = b.object_id )
+        LEFT JOIN X6x3g_postmeta c ON ( a.ID = c.post_id )
+        WHERE a.ID IN ($placeholder)";
+
+        $prepared_stmt = $wpdb->prepare($sql, $posts);
+        error_log(print_r($prepared_stmt, true));
+
+        $result =  $wpdb->query($prepared_stmt);
+
+        if ($result) {
+
+            return $result;
+        }
+
+        return false;
+    }
+
+    public function search_db($limit)
     {
         global $wpdb;
 
         $posts_found = array();
 
-        // $sql = "SELECT a.ID, a.post_title,a.post_name, a.post_type, a.post_status
-        // FROM {$wpdb->prefix}posts AS a
-        //    INNER JOIN (
-        //       SELECT post_title, MIN( id ) AS min_id
-        //       FROM {$wpdb->prefix}posts
-        //       WHERE post_type = 'post'
-        //       AND post_status = 'publish'
-        //       GROUP BY post_title
-        //       HAVING COUNT( * ) > 1
-        //    ) AS b ON b.post_title = a.post_title
-        // AND b.min_id <> a.id
-        // AND a.post_type = 'post'
-        // AND a.post_status = 'publish'
-        // LIMIT %d OFFSET %d";
-        error_log(print_r($last_index, true));
-        $sql = "SELECT a.ID, a.post_title,a.post_name, b.postdate
-        FROM (
-            SELECT ID,post_name,post_title
-            FROM X6x3g_posts
-            WHERE post_type = 'post' AND post_status = 'publish'
-        ) AS a
-        INNER JOIN (
-            SELECT post_title, MIN( id ) AS min_id, MAX(post_date) as postdate
-            FROM X6x3g_posts
-            WHERE post_type = 'post'
-            AND post_status = 'publish'
-            GROUP BY post_title
-            HAVING COUNT( * ) > 1
-            ORDER by postdate DESC
-        ) AS b ON b.post_title = a.post_title
+        $sql = "SELECT a.ID, a.post_title,a.post_name
+        FROM {$wpdb->prefix}posts AS a
+           INNER JOIN (
+              SELECT post_title, MIN( id ) AS min_id
+              FROM {$wpdb->prefix}posts
+              WHERE post_type = 'post'
+              AND post_status = 'publish'
+              GROUP BY post_title
+              HAVING COUNT( * ) > 1
+           ) AS b ON b.post_title = a.post_title
         AND b.min_id <> a.id
-        AND b.postdate < %s
+        AND a.post_type = 'post'
+        AND a.post_status = 'publish'
         LIMIT %d";
 
-        $prepared_stmt = $wpdb->prepare($sql, $last_index, $limit);
+
+        $prepared_stmt = $wpdb->prepare($sql, $limit);
         //error_log(print_r($prepared_stmt, true));
         $results = $wpdb->get_results($prepared_stmt);
-
-        $last_index = end($results);
-
-        $_SESSION['last_index'] = $last_index->postdate;
 
         if ($results) {
             foreach ($results as $key => $result) {
                 $posts_found[] = (int) $result->ID;
-
                 // error_log(print_r($result->ID, true));
             }
         } else {
@@ -92,21 +96,17 @@ class Duplicate_Post_Search
         $end = isset($_GET['end']) ? (int) $_GET['end'] : $chunks;
         $dupesCurrentCount = isset($_GET['dupes_current_count']) && !empty($_GET['number_of_rows']) ? (int) $_GET['dupes_current_count'] : null;
 
-        $last_index = isset($_SESSION['last_index']) ? $_SESSION['last_index'] : date('Y-m-d H:i:s');
-
         if ($totalRows < $chunks) {
-            $wp_results = $this->search_db($totalRows, $last_index);
+            $wp_results = $this->search_db($totalRows);
         } else {
-            $wp_results = $this->search_db($chunks, $last_index);
+            $wp_results = $this->search_db($chunks);
         }
-
 
         $results['dupesCurrentCount'] = count($wp_results) + $dupesCurrentCount;
         $results['totalRows'] = $totalRows;
         $results['chunks'] = $chunks;
         $results['start'] = $start + $chunks;
         $results['end'] = $end + $chunks;
-        $results['last_index'] = $_SESSION['last_index'];
 
         if (!isset($_SESSION['duplicate_posts_to_delete'])) {
             $_SESSION['duplicate_posts_to_delete'] = array();
@@ -116,43 +116,44 @@ class Duplicate_Post_Search
             $_SESSION['duplicate_posts_deleted_count'] = 0;
         }
 
-        if (!isset($_SESSION['duplicate_posts_to_delete'])) {
-            $_SESSION['last_index'] = $last_index;
-        }
-
         if (is_array($wp_results) && count($wp_results) > 0) {
 
             $duplicates_key = $start . $end;
-            $_SESSION['duplicate_posts_to_delete'][$duplicates_key] = $wp_results;
+            //$_SESSION['duplicate_posts_to_delete'][$duplicates_key] = $wp_results;
+            $post_deleted = $this->delete_posts($wp_results, $chunks);
+
+            if ($post_deleted) {
+                if ($totalRows == $end) {
+                    $dupesCurrentCount = $results['dupesCurrentCount'];
+                    $results['alerts']['completed'] = true;
+                    $results['alerts']['action'] = 'success';
+                    $results['alerts']['message'] = "Process Completed! Deleted $dupesCurrentCount duplicated posts";
+                    $results['deletePosts'] = "<button id='delete-duplicates'>Delete Dupiclates</button>";
+                    // $results['posts'] = $wp_results;
+                    error_log(print_r($_SESSION['duplicate_posts_to_delete'], true));
+                    // error_log(print_r($results['alerts']['message'], true));
+                }
+
+                if ($totalRows > $end) {
+                    $start = $start + $chunks;
+                    $dupesCurrentCount = $results['dupesCurrentCount'];
+                    $results['alerts']['completed'] = false;
+                    $results['alerts']['action'] = 'info';
+                    $results['alerts']['message'] = "Scanned $start / $totalRows. \n Deleted $dupesCurrentCount duplicated posts";
+                    // error_log(print_r($results['alerts']['message'], true));
+                }
+
+                if ($chunks > $totalRows) {
+                    $dupesCurrentCount = $results['dupesCurrentCount'];
+                    $results['alerts']['completed'] = true;
+                    $results['alerts']['action'] = 'success';
+                    $results['alerts']['message'] = "Process Completed! Deleted $dupesCurrentCount duplicated posts";
+                    $results['deletePosts'] = "<button id='delete-duplicates'>Delete Dupiclates</button>";
+                }
+            }
         }
 
-        if ($totalRows == $end) {
-            $dupesCurrentCount = $results['dupesCurrentCount'];
-            $results['alerts']['completed'] = true;
-            $results['alerts']['action'] = 'success';
-            $results['alerts']['message'] = "Process Completed! Found $dupesCurrentCount duplicated posts";
-            $results['deletePosts'] = "<button id='delete-duplicates'>Delete Dupiclates</button>";
-            // $results['posts'] = $wp_results;
-            error_log(print_r($_SESSION['duplicate_posts_to_delete'], true));
-            // error_log(print_r($results['alerts']['message'], true));
-        }
 
-        if ($totalRows > $end) {
-            $start = $start + $chunks;
-            $dupesCurrentCount = $results['dupesCurrentCount'];
-            $results['alerts']['completed'] = false;
-            $results['alerts']['action'] = 'info';
-            $results['alerts']['message'] = "Scanned $start / $totalRows. \n Found $dupesCurrentCount duplicated posts";
-            // error_log(print_r($results['alerts']['message'], true));
-        }
-
-        if ($chunks > $totalRows) {
-            $dupesCurrentCount = $results['dupesCurrentCount'];
-            $results['alerts']['completed'] = true;
-            $results['alerts']['action'] = 'success';
-            $results['alerts']['message'] = "Process Completed! Found $dupesCurrentCount duplicated posts";
-            $results['deletePosts'] = "<button id='delete-duplicates'>Delete Dupiclates</button>";
-        }
 
 
         // if ($end == 1000) {

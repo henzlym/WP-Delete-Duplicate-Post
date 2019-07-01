@@ -32,6 +32,7 @@ class Duplicate_Post_Delete
 
         return false;
     }
+
     public function delete_duplicate_posts()
     {
         if (!isset($_SESSION['duplicate_posts_to_delete']) && !isset($_SESSION['duplicate_posts_deleted_count'])) {
