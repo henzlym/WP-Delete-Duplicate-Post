@@ -17,10 +17,11 @@
             }
 
             var textContent = (hours ? (hours > 9 ? hours : "0" + hours) : "00") + ":" + (minutes ? (minutes > 9 ? minutes : "0" + minutes) : "00") + ":" + (seconds > 9 ? seconds : "0" + seconds);
-            $(document).find('#clock').html(textContent);
+            $(document).find('#clock').html("<time>" + textContent + "</time>");
             timer();
         }
         function timer() {
+            $('.timer').addClass('active');
             t = setTimeout(addTime, 1000);
         }
         function updateProgressBar(value) {
@@ -30,7 +31,7 @@
             progressBar.html(value + '%');
         }
         function uploadNotice(action, message) {
-            return `<div class="alert alert-${action}" role="alert">${message}</div>`;
+            return `<div class="wp-dd-alert ${action}" role="alert">${message}</div>`;
         }
         function searchDatabaseCB(start, end, chunks, total, totalRows, dupesCurrentCount) {
 
@@ -60,78 +61,34 @@
                 }
             }
         }
-        function deleteDuplicatePostsCB(start, end, chunks, total) {
 
-            if ((start + chunks) < total || (start + chunks) == total) {
+        function scanDatabase() {
 
-                var percentComplete = (start / total) * 100;
-                if ((start + chunks) == total) {
-                    percentComplete = (end / total) * 100;
-                }
-                setTimeout(function () {
-                    updateProgressBar(parseInt(percentComplete));
-                    deleteDuplicatePosts(start, end, chunks, total);
-                }, 1000);
-
-            }
-            if ((start + chunks) > total) {
-                chunks = total - start;
-                end = chunks + start;
-                var percentComplete = (end / total) * 100;
-
-                if (end == total && start < total) {
-                    setTimeout(function () {
-                        updateProgressBar(parseInt(percentComplete));
-                        deleteDuplicatePosts(start, end, chunks, total);
-                    }, 1000);
-
-                }
-            }
-        }
-        function deleteDuplicatePosts(start, end, chunks, totalRows) {
             $.ajax({
                 url: admin.ajaxurl,
                 type: "GET",
                 data: {
-                    "chunks": chunks,
-                    "start": start,
-                    "end": end,
-                    "number_of_rows": totalRows,
-                    "action": "delete_duplicate_posts"
+                    "action": "scan_duplicate_posts"
                 },
                 async: true,
-                success: function (results) {
-                    var results = JSON.parse(results);
-                    var start, end, chunks, total, totalRows, alerts, posts, deletePosts, postsDeleted;
-
-                    start = results.start;
-                    end = results.end;
-                    chunks = results.chunks;
-                    total = results.totalRows;
-                    totalRows = results.totalRows;
-                    alerts = results.alerts;
-                    posts = results.posts;
-                    deletePosts = results.deletePosts;
-                    postsDeleted = results.deletePosts;
-
-                    if (!alerts.completed) {
-
-                        $('.read-file-alert').html(uploadNotice(alerts.action, alerts.message));
-                        deleteDuplicatePostsCB(start, end, chunks, totalRows);
-                    } else {
-                        clearTimeout(t);
-                        $('.read-file-alert').html(uploadNotice(alerts.action, alerts.message));
-
-                    }
+                beforeSend: function () {
+                    $('.loader-container').addClass('active');
 
                 },
+                success: function (results) {
+                    var results = JSON.parse(results);
+                    console.log(results);
+                    $('#wp-dd-post span').html(results.posts_duplicated);
+                    $('#wp-dd-found span').html(results.duplicated_posts);
+                    $('.loader-container').removeClass('active');
+                    $('.wp-dd-overview').addClass('active');
+                },
                 error: function (error) {
-                    clearTimeout(t);
                     console.log(error);
                 }
             });
         }
-        function searchDatabase(start = 0, end = 20, chunks = 500, totalRows = null, dupesCurrentCount = null) {
+        function searchDatabase(start = 0, end = 20, chunks = 100, totalRows = null, dupesCurrentCount = null) {
             $.ajax({
                 url: admin.ajaxurl,
                 type: "GET",
@@ -164,18 +121,15 @@
                         searchDatabaseCB(start, end, chunks, total, totalRows, dupesCurrentCount);
                     } else {
                         clearTimeout(t);
-                        $('.read-file-alert').html(uploadNotice(alerts.action, alerts.message));
-                        $('.read-file-alert').after(deletePosts);
+                        $('.read-file-alert').html('');
 
                         var percentComplete = (total / total) * 100;
 
                         updateProgressBar(parseInt(percentComplete));
-
-                        if (deletePosts.length > 0) {
-                            $(document).on('click', '#delete-duplicates', function () {
-                                deleteDuplicatePosts(0, 20, 20, dupesCurrentCount);
-                            });
-                        }
+                        $('.timer h5').html("Process Completed!");
+                        $('.timer h5').css({ 'color': '#28a745', "font-size": "1.25rem" });
+                        $('.timer .timer-info').html(alerts.message);
+                        $(document).find('#clock').hide();
                     }
 
                 },
@@ -187,10 +141,11 @@
         }
 
         function initSearch() {
-            $(document).on('click', '#search', function () {
+            $(document).on('click', '#start-deletion', function () {
 
+                $(this).attr('disabled', true);
                 var start = $('input[name="row_start"]').val() ? $('input[name="row_start"]').val() : 0;
-                var chunks = $('input[name="row_chunks"]').val() ? $('input[name="row_chunks"]').val() : 500;
+                var chunks = $('input[name="row_chunks"]').val() ? $('input[name="row_chunks"]').val() : 100;
                 var end = parseInt(start) + parseInt(chunks);
                 var totalRows = $('input[name="row_end"]').val();
 
@@ -200,6 +155,7 @@
             });
         }
 
+        scanDatabase();
         initSearch();
     });
 

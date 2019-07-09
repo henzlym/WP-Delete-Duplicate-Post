@@ -15,7 +15,10 @@ class Duplicate_Posts_Admin
             unset($_SESSION['duplicate_posts_to_delete']);
             unset($_SESSION['duplicate_posts_deleted_count']);
             unset($_SESSION['duplicate_posts_total_rows']);
-            unset($_SESSION['last_index']);
+            unset($_SESSION['totalDuplicates']);
+        }
+        if (!wp_doing_ajax() && isset($_SESSION['is_scanning_dupes'])) {
+            unset($_SESSION['is_scanning_dupes']);
         }
     }
     /**
@@ -31,11 +34,23 @@ class Duplicate_Posts_Admin
             wp_enqueue_script(DUPLICATE_POST_SLUG . '-popper', 'https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js', array('jquery'), '1.14.7', true);
             wp_enqueue_script(DUPLICATE_POST_SLUG . '-bootstrap', 'https://maxcdn.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js', array('jquery'), '4.3.1', true);
             wp_enqueue_script(DUPLICATE_POST_SLUG . '-script', DUPLICATE_POST_URL . '/assets/js/main.js', array('jquery'), rand(0, 999), true);
+
+            wp_enqueue_style(DUPLICATE_POST_SLUG . '-style', DUPLICATE_POST_URL . '/assets/css/style.css', array(), rand(0, 999), 'all');
+
+            $option = get_option(DUPLICATE_POST_SLUG) ? get_option(DUPLICATE_POST_SLUG) : false;
+
+            if ($option == true) {
+                $isScanned = true;
+            } else {
+                $isScanned = false;
+            }
+
             wp_localize_script(
                 DUPLICATE_POST_SLUG . '-script',
                 'admin',
                 array(
-                    'ajaxurl' => admin_url('admin-ajax.php')
+                    'ajaxurl' => admin_url('admin-ajax.php'),
+                    'isScanned' => $isScanned
                 )
             );
         }
@@ -53,7 +68,7 @@ class Duplicate_Posts_Admin
             'manage_options',
             DUPLICATE_POST_SLUG,
             array($this, 'render_admin_page'),
-            'dashicons-tide',
+            'dashicons-buddicons-friends',
             90
         );
         // add_submenu_page(
@@ -71,6 +86,15 @@ class Duplicate_Posts_Admin
     public function render_admin_page()
     {
 
+        $option = get_option(DUPLICATE_POST_SLUG) ? get_option(DUPLICATE_POST_SLUG) : false;
+
+        if ($option == true) {
+            $posts_duplicated = $option['posts_duplicated'];
+            $duplicated_posts = $option['duplicated_posts'];
+        } else {
+            $posts_duplicated = 'n/a';
+            $duplicated_posts = 'n/a';
+        }
         require DUPLICATE_POST_ROOT . '/admin/index.php';
     }
 }
