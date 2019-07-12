@@ -88,7 +88,8 @@
                 }
             });
         }
-        function searchDatabase(start = 0, end = 20, chunks = 100, totalRows = null, dupesCurrentCount = null) {
+        function searchDatabase(start, end, chunks, totalRows = null, dupesCurrentCount = null) {
+
             $.ajax({
                 url: admin.ajaxurl,
                 type: "GET",
@@ -145,12 +146,12 @@
 
                 $(this).attr('disabled', true);
                 var start = $('input[name="row_start"]').val() ? $('input[name="row_start"]').val() : 0;
-                var chunks = $('input[name="row_chunks"]').val() ? $('input[name="row_chunks"]').val() : 100;
+                var chunks = $('input[name="row_chunks"]').val() ? $('input[name="row_chunks"]').val() : 20;
                 var end = parseInt(start) + parseInt(chunks);
                 var totalRows = $('input[name="row_end"]').val();
 
                 timer();
-                searchDatabase(start, end, chunks.totalRows);
+                searchDatabase(start, end, chunks,totalRows);
 
             });
         }

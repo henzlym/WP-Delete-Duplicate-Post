@@ -38,8 +38,69 @@ class Duplicate_Post_Search
         return $results;
     }
 
+    public function delete_duplicate_posts($posts, $force_delete,$limit)
+    {
+        global $wpdb;
+
+        $delete_post_contents = array();
+        $delete_ids = array();
+        $delete_post_title = array();
+
+        if (isset($posts[0]) && is_array($posts[0])) {
+            foreach ($posts as $key => $post) {
+                if (is_array($post)) {
+                    $delete_post_contents[] = $post['post_content'];
+                    $delete_ids[] = $post['ID'];
+                    $delete_post_title[] = $post['post_title'];
+                }
+            }
+        }
+
+        if (!empty($delete_ids) && !empty($delete_post_contents)) {
+            $placeholder_post_contents = implode(', ', array_fill(0, count($delete_post_contents), '%s'));
+            $placeholder_post_title = implode(', ', array_fill(0, count($delete_post_title), '%s'));
+            $placeholder_ids = implode(', ', array_fill(0, count($delete_ids), '%d'));
+            $params = array_merge($delete_post_contents, $delete_post_title, $delete_ids,array($limit));
+        }
+
+        $sql = "SELECT a.ID
+            FROM {$wpdb->prefix}posts a
+            WHERE a.post_type = 'post' 
+            AND a.post_status = 'publish'
+            AND a.post_content IN ($placeholder_post_contents) 
+            AND a.post_title IN ($placeholder_post_title) 
+            AND a.ID NOT IN ($placeholder_ids) LIMIT %d";
+
+
+        $sql = $wpdb->prepare($sql, $params);
+
+        // error_log(print_r($sql, true));
+
+        $posts_to_delete = $wpdb->get_results($sql);
+        
+        $post_delete_count = 0;
+
+		if ( ! empty( $posts_to_delete ) ){
+            error_log(print_r("Started deletion of posts", true));
+			foreach ($posts_to_delete as $key => $post_to_delete ) {
+
+                //if(($key + 1) == $limit) break;
+
+                $deleted = isset($post_to_delete->ID) ? true : false;
+                $deleted = wp_delete_post( $post_to_delete->ID, $force_delete );
+                if($deleted){
+                    error_log(print_r("$key: Deleted Post: $post_to_delete->ID", true));
+                }
+			}
+			$post_delete_count = count( $posts_to_delete );
+
+        }
+
+		return $post_delete_count;
+    }
     public function find_duplicate($posts, $group = true, $limit = 20)
     {
+        
         global $wpdb;
 
         $wpdb->flush();
@@ -247,11 +308,9 @@ class Duplicate_Post_Search
         $results = array();
 
         $totalRows = isset($_GET['number_of_rows']) && !empty($_GET['number_of_rows']) ? (int) $_GET['number_of_rows'] : count($this->total_post_count());
-
-
-        $chunks = isset($_GET['chunks']) && $_GET['chunks'] != false ? (int) $_GET['chunks'] : $totalRows;
-        $start = isset($_GET['start']) ? (int) $_GET['start'] : 0;
-        $end = isset($_GET['end']) ? (int) $_GET['end'] : $chunks;
+        $chunks = isset($_GET['chunks']) && !empty($_GET['chunks']) ? (int) $_GET['chunks'] : $totalRows;
+        $start = isset($_GET['start']) && !empty($_GET['start']) ? (int) $_GET['start'] : 0;
+        $end = isset($_GET['end']) && !empty($_GET['end']) ? (int) $_GET['end'] : $chunks;
         $dupesCurrentCount = isset($_GET['dupes_current_count']) && !empty($_GET['number_of_rows']) ? (int) $_GET['dupes_current_count'] : 0;
 
         if ($totalRows < $chunks) {
@@ -260,8 +319,7 @@ class Duplicate_Post_Search
             $wp_results = $this->search_db($chunks);
         }
 
-        $wp_results = $this->find_duplicate($wp_results);
-
+        $wp_results = $this->delete_duplicate_posts($wp_results, false,$chunks);
         error_log(print_r($wp_results, true));
 
         $results['dupesCurrentCount'] = $wp_results + $dupesCurrentCount;
