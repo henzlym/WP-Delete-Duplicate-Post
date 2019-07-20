@@ -11,14 +11,10 @@ class Duplicate_Posts_Admin
 
     public function reset_sessions()
     {
-        if (!wp_doing_ajax() && isset($_SESSION['duplicate_posts_to_delete'])) {
-            unset($_SESSION['duplicate_posts_to_delete']);
-            unset($_SESSION['duplicate_posts_deleted_count']);
-            unset($_SESSION['duplicate_posts_total_rows']);
-            unset($_SESSION['totalDuplicates']);
-        }
         if (!wp_doing_ajax() && isset($_SESSION['is_scanning_dupes'])) {
             unset($_SESSION['is_scanning_dupes']);
+            unset($_SESSION['posts_duplicated']);
+            unset($_SESSION['duplicated_posts']);
         }
     }
     /**
@@ -37,20 +33,11 @@ class Duplicate_Posts_Admin
 
             wp_enqueue_style(DUPLICATE_POST_SLUG . '-style', DUPLICATE_POST_URL . '/assets/css/style.css', array(), rand(0, 999), 'all');
 
-            $option = get_option(DUPLICATE_POST_SLUG) ? get_option(DUPLICATE_POST_SLUG) : false;
-
-            if ($option == true) {
-                $isScanned = true;
-            } else {
-                $isScanned = false;
-            }
-
             wp_localize_script(
                 DUPLICATE_POST_SLUG . '-script',
                 'admin',
                 array(
-                    'ajaxurl' => admin_url('admin-ajax.php'),
-                    'isScanned' => $isScanned
+                    'ajaxurl' => admin_url('admin-ajax.php')
                 )
             );
         }
@@ -71,14 +58,6 @@ class Duplicate_Posts_Admin
             'dashicons-buddicons-friends',
             90
         );
-        // add_submenu_page(
-        //     'csv',
-        //     'Convert CSV',
-        //     'Convert CSV',
-        //     'manage_options',
-        //     'csv-convert',
-        //     'render_csv_convert_admin_page'
-        // );
     }
     /**
      * Display a Admin Home page

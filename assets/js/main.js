@@ -146,12 +146,12 @@
 
                 $(this).attr('disabled', true);
                 var start = $('input[name="row_start"]').val() ? $('input[name="row_start"]').val() : 0;
-                var chunks = $('input[name="row_chunks"]').val() ? $('input[name="row_chunks"]').val() : 20;
+                var chunks = $('input[name="row_chunks"]').val() ? $('input[name="row_chunks"]').val() : 10;
                 var end = parseInt(start) + parseInt(chunks);
                 var totalRows = $('input[name="row_end"]').val();
 
                 timer();
-                searchDatabase(start, end, chunks,totalRows);
+                searchDatabase(start, end, chunks, totalRows);
 
             });
         }
