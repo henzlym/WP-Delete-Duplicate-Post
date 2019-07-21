@@ -5,12 +5,6 @@ body {
 
 h1, h2, h3 {
     font-family: 'Roboto', sans-serif;
-    /* font-family: 'Lato', sans-serif; */
-    /* font-family: 'Montserrat', sans-serif; */
-    /* font-family: 'Open Sans', sans-serif; */
-    /* font-family: 'Ubuntu', sans-serif; */
-    /* font-family: 'Kanit', sans-serif; */
-    /* font-family: 'Overpass', sans-serif; */
 }
 
 h1, h2, h3 {
@@ -18,13 +12,7 @@ h1, h2, h3 {
 }
 
 h4, h5, h6, p, a, button, li, span, input, select, textarea {
-    /* font-family: 'Roboto', sans-serif; */
-    /* font-family: 'Lato', sans-serif; */
-    /* font-family: 'Montserrat', sans-serif; */
     font-family: 'Open Sans', sans-serif;
-    /* font-family: 'Ubuntu', sans-serif; */
-    /* font-family: 'Kanit', sans-serif; */
-    /* font-family: 'Overpass', sans-serif; */
 }
 
 #wp-dd-title {
