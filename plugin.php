@@ -1,4 +1,24 @@
 <?php
+/**
+ *
+ * @link https://henzlymeghie.com
+ * @since 1.0.0
+ * @package Blk Canvas
+ * @link https://gist.github.com/marcelosomers/8305065
+ *
+ * @wordpress-plugin
+ * Plugin Name: Blk Canvas - Delete Duplicate Posts
+ * Plugin URI: https://henzlymeghie.com/
+ * Description: Delete duplicate content from posts and pages
+ * Version: 1.0.0
+ * Author: Henzly Meghie
+ * Author URI: https://henzlymeghie.com/
+ * License: GPL-2.0+
+ * License URI: http://www.gnu.org/licenses/gpl-2.0.txt
+ * Text Domain: bca
+ * Domain Path: /languages/
+ */
+
 //require plugin_dir_path(__FILE__) . 'init.php';
 
 define("DUPLICATE_POST_NAME", 'duplicate_posts');

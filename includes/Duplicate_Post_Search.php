@@ -102,7 +102,7 @@ class Duplicate_Post_Search
         WHERE
             post_type = 'post' AND post_status = 'publish'
         GROUP BY
-            post_content,post_title
+            post_content
         HAVING
             COUNT(post_content) > 1
         ORDER BY
