@@ -1,0 +1,21 @@
+.bca-progress-container{
+    margin-top: 5px;
+}
+.bca-progress{
+    overflow: hidden;
+    progress{
+        appearance: none;
+        height: 0.5rem;
+        width: 100%;
+        border-radius: 0.25rem;
+        &::-webkit-progress-bar {
+            background-color: #e9ecef;
+            border-radius: 2px;
+        }
+        &::-webkit-progress-value{
+            background-color: #0175FC;
+        }
+
+    }
+    
+}

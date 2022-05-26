@@ -1,0 +1,41 @@
+{
+  "name": "wp-delete-duplicate-post",
+  "version": "1.0.0",
+  "description": "Wordpress plugin that will search for duplicate post and delete them.",
+  "main": "index.js",
+  "scripts": {
+    "build": "wp-scripts build",
+    "check-engines": "wp-scripts check-engines",
+    "check-licenses": "wp-scripts check-licenses",
+    "format": "wp-scripts format",
+    "lint:css": "wp-scripts lint-style",
+    "lint:js": "wp-scripts lint-js",
+    "lint:md:docs": "wp-scripts lint-md-docs",
+    "lint:pkg-json": "wp-scripts lint-pkg-json",
+    "packages-update": "wp-scripts packages-update",
+    "plugin-zip": "wp-scripts plugin-zip",
+    "start": "wp-scripts start",
+    "test:e2e": "wp-scripts test-e2e",
+    "test:unit": "wp-scripts test-unit-js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/henzlym/wp-delete-duplicate-post.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/henzlym/wp-delete-duplicate-post/issues"
+  },
+  "homepage": "https://github.com/henzlym/wp-delete-duplicate-post#readme",
+  "dependencies": {
+    "@wordpress/api-fetch": "^6.5.0",
+    "@wordpress/components": "^19.10.0",
+    "@wordpress/core-data": "^4.7.0",
+    "@wordpress/data": "^6.8.0",
+    "@wordpress/dom-ready": "^3.8.0",
+    "@wordpress/element": "^4.6.0",
+    "@wordpress/scripts": "^23.0.0"
+  }
+}

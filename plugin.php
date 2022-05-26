@@ -27,7 +27,7 @@ define("DUPLICATE_POST_ROOT", plugin_dir_path(__FILE__));
 define("DUPLICATE_POST_URL", plugin_dir_url(__FILE__));
 
 
-
+// delete_option( DUPLICATE_POST_SLUG );
 class Duplicate_Posts
 {
     public function __construct()

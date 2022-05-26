@@ -1,0 +1,8 @@
+.bca-duplicate-posts-panel{
+    display: grid;
+    grid-template-columns: 150px 1fr;
+    grid-column-gap: 15px;
+}
+.components-card-header.bca-duplicate-posts-main_header{
+    justify-content: center;
+}
