@@ -1,13 +1,13 @@
 /**
  * WordPress dependencies
  */
-import { Card, CardBody, CardHeader, TabPanel } from '@wordpress/components';
+import { Card, CardBody } from '@wordpress/components';
 /**
 * Internal dependencies
 */
-import { Delete, ProgressBar } from "../components";
+import { Delete, ProgressBar } from "..";
 
-import './main/style.scss';
+import './style.scss';
 
 export default function Main({ posts, currentProgress, isInProgress, setIsInProgress, setCurrentProgress, setPosts }) {
     

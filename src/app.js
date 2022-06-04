@@ -1,11 +1,10 @@
 
 import apiFetch from '@wordpress/api-fetch';
-import { 
-    useCallback,
+import {
     useEffect,
     useState
 } from '@wordpress/element';
-import { Header, Main, NewSearch, ProgressBar } from "./components";
+import { Header, Main, NewSearch } from "./components";
 
 function Admin(props) {
     
@@ -30,7 +29,7 @@ function Admin(props) {
         },[]
     )
     // console.log( isSearching );
-    console.log( posts );
+    // console.log( posts );
     return(
         <div className={`bca-delete-duplicate-posts`}>
             { posts.has_duplicate == false || posts.length == 0 ? (

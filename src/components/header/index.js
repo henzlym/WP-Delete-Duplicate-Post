@@ -3,11 +3,6 @@
  */
 import { Button, Card, CardHeader } from '@wordpress/components';
 
-import { 
-    useState,
-    useEffect
-} from '@wordpress/element';
-
 export default function Header({ title }) {
 
     const siteUrl = document.location.origin;
